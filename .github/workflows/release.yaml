@@ -1,0 +1,181 @@
+on:
+  push:
+    tags:
+    - 'v*'
+
+name: Release
+
+jobs:
+  build:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+
+      - name: install go-bindata
+        run: go get -v github.com/jteeuwen/go-bindata/go-bindata
+  
+      - name: Download dependencies
+        run: |
+          export CGO_ENABLED=0
+          export GOARCH=amd64
+          export GO111MODULE=on
+          go mod download
+          go run -v github.com/jteeuwen/go-bindata/go-bindata .
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      
+      - name: linux32
+        run: make linux32
+  
+      - name: save linux32 artifact in Actions
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: linux32
+          path: bin/glauth-linux32
+  
+      - name: upload linux32 release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/glauth-linux32
+          asset_name: glauth-linux32
+          asset_content_type: application/binary
+  
+  
+      - name: linux64
+        run: make linux64
+  
+      - name: save linux64 artifact in Actions
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: linux64
+          path: bin/glauth-linux64
+  
+      - name: upload linux64 release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/glauth-linux64
+          asset_name: glauth-linux64
+          asset_content_type: application/binary
+  
+  
+      - name: linuxarm32
+        run: make linuxarm32
+  
+      - name: save linuxarm32 artifact in Actions
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: linuxarm32
+          path: bin/glauth-linuxarm32
+  
+      - name: upload linuxarm32 release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/glauth-linuxarm32
+          asset_name: glauth-linuxarm32
+          asset_content_type: application/binary
+  
+  
+      - name: linuxarm64
+        run: make linuxarm64
+  
+      - name: save linuxarm64 artifact in Actions
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: linuxarm64
+          path: bin/glauth-linuxarm64
+  
+      - name: upload linuxarm64 release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/glauth-linuxarm64
+          asset_name: glauth-linuxarm64
+          asset_content_type: application/binary
+  
+  
+      - name: darwin64
+        run: make darwin64
+  
+      - name: save darwin64 artifact in Actions
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: darwin64
+          path: bin/glauth-darwin64
+  
+      - name: upload darwin64 release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/glauth-darwin64
+          asset_name: glauth-darwin64
+          asset_content_type: application/binary
+  
+  
+      - name: win32
+        run: make win32
+  
+      - name: save win32 artifact in Actions
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: win32
+          path: bin/glauth-win32
+  
+      - name: upload win32 release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/glauth-win32
+          asset_name: glauth-win32
+          asset_content_type: application/binary
+  
+  
+      - name: win64
+        run: make win64
+  
+      - name: save win64 artifact in Actions
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: win64
+          path: bin/glauth-win64
+  
+      - name: upload win64 release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/glauth-win64
+          asset_name: glauth-win64
+          asset_content_type: application/binary

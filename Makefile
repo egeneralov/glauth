@@ -1,8 +1,7 @@
-VERSION=$(shell bin/glauth64 --version)
+VERSION=$(shell bin/glauth-linux64 --version)
 
 GIT_COMMIT=$(shell git rev-list -1 HEAD )
-BUILD_TIME=$(shell date --utc +%Y%m%d_%H%M%SZ)
-GIT_CLEAN=$(shell git status | grep -E "working (tree|directory) clean" | wc -l)
+BUILD_TIME=$(shell date +%Y%m%d_%H%M%SZ)
 
 # Last git tag
 LAST_GIT_TAG=$(shell git describe --abbrev=0 --tags 2> /dev/null)
@@ -14,7 +13,7 @@ GIT_IS_TAG_COMMIT=$(shell git describe --abbrev=0 --tags > /dev/null 2> /dev/nul
 GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
 # Build variables
-BUILD_VARS=-X main.GitCommit=${GIT_COMMIT} -X main.GitBranch=${GIT_BRANCH} -X main.BuildTime=${BUILD_TIME} -X main.GitClean=${GIT_CLEAN} -X main.LastGitTag=${LAST_GIT_TAG} -X main.GitTagIsCommit=${GIT_IS_TAG_COMMIT}
+BUILD_VARS=-X main.GitCommit=${GIT_COMMIT} -X main.GitBranch=${GIT_BRANCH} -X main.BuildTime=${BUILD_TIME} -X main.GitClean=0 -X main.LastGitTag=${LAST_GIT_TAG} -X main.GitTagIsCommit=${GIT_IS_TAG_COMMIT}
 BUILD_FILES=glauth.go bindata.go ldapbackend.go webapi.go configbackend.go
 
 #####################
@@ -69,19 +68,19 @@ devrun:
 
 
 linux32:
-	GOOS=linux GOARCH=386 go build -ldflags "${BUILD_VARS}" -o bin/glauth32 ${BUILD_FILES} && cd bin && sha256sum glauth32 > glauth32.sha256
+	GOOS=linux GOARCH=386 go build -ldflags "${BUILD_VARS}" -o bin/glauth-linux32 ${BUILD_FILES} && cd bin && sha256sum glauth-linux32 > glauth-linux32.sha256
 
 linux64:
-	GOOS=linux GOARCH=amd64 go build -ldflags "${BUILD_VARS}" -o bin/glauth64 ${BUILD_FILES} && cd bin && sha256sum glauth64 > glauth64.sha256
+	GOOS=linux GOARCH=amd64 go build -ldflags "${BUILD_VARS}" -o bin/glauth-linux64 ${BUILD_FILES} && cd bin && sha256sum glauth-linux64 > glauth-linux64.sha256
 
 linuxarm32:
-	GOOS=linux GOARCH=arm go build -ldflags "${BUILD_VARS}" -o bin/glauth-arm32 ${BUILD_FILES} && cd bin && sha256sum glauth-arm32 > glauth-arm32.sha256
+	GOOS=linux GOARCH=arm go build -ldflags "${BUILD_VARS}" -o bin/glauth-linuxarm32 ${BUILD_FILES} && cd bin && sha256sum glauth-linuxarm32 > glauth-linuxarm32.sha256
 
 linuxarm64:
-	GOOS=linux GOARCH=arm64 go build -ldflags "${BUILD_VARS}" -o bin/glauth-arm64 ${BUILD_FILES} && cd bin && sha256sum glauth-arm64 > glauth-arm64.sha256
+	GOOS=linux GOARCH=arm64 go build -ldflags "${BUILD_VARS}" -o bin/glauth-linuxarm64 ${BUILD_FILES} && cd bin && sha256sum glauth-linuxarm64 > glauth-linuxarm64.sha256
 
 darwin64:
-	GOOS=darwin GOARCH=amd64 go build -ldflags "${BUILD_VARS}" -o bin/glauth-darwin ${BUILD_FILES} && cd bin && sha256sum glauth-darwin > glauth-darwin.sha256
+	GOOS=darwin GOARCH=amd64 go build -ldflags "${BUILD_VARS}" -o bin/glauth-darwin64 ${BUILD_FILES} && cd bin && sha256sum glauth-darwin64 > glauth-darwin64.sha256
 
 win32:
 	GOOS=windows GOARCH=386 go build -ldflags "${BUILD_VARS}" -o bin/glauth-win32 ${BUILD_FILES} && cd bin && sha256sum glauth-win32 > glauth-win32.sha256
