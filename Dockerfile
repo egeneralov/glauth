@@ -1,58 +1,28 @@
-#################
-# Build Step
-#################
+FROM golang:1.13-alpine
 
-FROM golang:alpine as build
-MAINTAINER Ben Yanke <ben@benyanke.com>
+RUN apk add --no-cache git bzr make ca-certificates
 
-# Setup work env
-RUN mkdir /app /tmp/gocode
-ADD . /app/
-WORKDIR /app
+ENV \
+  GO111MODULE=on \
+  CGO_ENABLED=0 \
+  GOOS=linux \
+  GOARCH=amd64
+
+WORKDIR /go/src/github.com/egeneralov/glauth
+ADD go.mod go.sum /go/src/github.com/egeneralov/glauth/
+RUN go mod download
+
+ADD . .
+
+RUN \
+  go get -v -u github.com/jteeuwen/go-bindata/... && \
+  /go/bin/go-bindata -pkg=main assets . && \
+  go build -v -installsuffix cgo -ldflags="-w -s" -o /go/bin/glauth .
 
 
-# Required envs for GO
-ENV GOPATH=/tmp/gocode
-ENV GOOS=linux
-ENV GOARCH=amd64
-ENV CGO_ENABLED=0
+FROM alpine:3.10
 
-# Only needed for alpine builds
-RUN apk add --no-cache git bzr make
-
-# Install deps
-RUN go get -d -v ./...
-
-# Run go-bindata to embed data for API
-RUN go get -u github.com/jteeuwen/go-bindata/... && $GOPATH/bin/go-bindata -pkg=main assets && gofmt -w bindata.go
-
-# Build and copy final result
-RUN make linux64 && cp ./bin/glauth64 /app/glauth
-
-#################
-# Run Step
-#################
-
-FROM alpine as run
-MAINTAINER Ben Yanke <ben@benyanke.com>
-
-# Copies a sample config to be used if a volume isn't mounted with user's config
-ADD sample-simple.cfg /app/config/config.cfg
-
-# Copy binary from build container
-COPY --from=build /app/glauth /app/glauth
-
-# Copy docker specific scripts from build container
-COPY --from=build /app/scripts/docker/start.sh /app/docker/
-COPY --from=build /app/scripts/docker/default-config.cfg /app/docker/
-
-# Install ldapsearch for container health checks, then ensure ldapsearch is installed
-RUN apk update && apk add --no-cache dumb-init openldap-clients && which ldapsearch && rm -rf /var/cache/apk/*
-
-# Install init
-
-# Expose web and LDAP ports
+COPY --from=0 /go/bin /go/bin
+USER nobody
 EXPOSE 389 636 5555
-
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/bin/sh", "/app/docker/start.sh"]
+CMD /go/bin/glauth
