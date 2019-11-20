@@ -2,6 +2,10 @@
 
 Deploy [glauth](https://github.com/glauth/glauth) into kubernetes.
 
+### quickstart
+
+Just edit [values.yaml](values.yaml), run `helm install --name glauth .helm/glauth --namespace=glauth` and your glauth installation will appear at `glauth.glauth.svc.cluster.local`.
+
 ### checks
 
 `livenessProbe` working on tcp port check. Also, if user with plaintext password is present - `readinessProbe` will be generated.

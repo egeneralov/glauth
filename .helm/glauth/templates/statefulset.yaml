@@ -38,7 +38,7 @@ spec:
         fsGroup: 0
       containers:
       - name: glauth
-        image: "{{ .Values.image }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         ports:
         - containerPort: 389
           name: ldap
@@ -50,6 +50,8 @@ spec:
         - name: {{ .Release.Name }}-glauth-cfg
           mountPath: /glauth.cfg
           subPath: glauth.cfg
+        resources:
+{{ .Values.resources | toYaml | indent 10 -}}
         livenessProbe:
           tcpSocket:
             port: 389
@@ -61,19 +63,14 @@ spec:
 {{- if eq $isReady false }}
 {{- if $user.password }}
 {{- $isReady = true }}
-{{- range $group := $.Values.config.groups -}}
-{{- if eq $group.unixid $user.primarygroup -}}
-{{ $groupName = $group.name -}}
-{{- end -}}
-{{- end }}
         readinessProbe:
           exec:
             command:
             - /bin/sh
             - -xec
-            - "ldapsearch -LLL -H ldap://127.0.0.1:389 -D cn={{ $user.name }},ou={{ $groupName }},{{ $.Values.config.backend.baseDN }} -w {{ $user.password }} -x -b{{ $.Values.config.backend.baseDN }} cn={{ $groupName }}"
+            - "ldapsearch -LLL -H ldap://127.0.0.1:389 -D cn={{ $user.name }},ou={{ $user.name }},{{ $.Values.config.backend.baseDN }} -w {{ $user.password }} -x -b{{ $.Values.config.backend.baseDN }} cn={{ $user.name }}"
           initialDelaySeconds: 5
-          periodSeconds: 10
+          periodSeconds: 60
 {{- end }}
 {{- end }}
 {{- end }}
