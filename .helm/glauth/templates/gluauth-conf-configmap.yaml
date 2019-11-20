@@ -1,0 +1,65 @@
+{{- define "helm-toolkit.utils.joinListWithComma" -}}
+{{- $local := dict "first" true -}}
+{{- range $k, $v := . -}}{{- if not $local.first -}},{{- end -}}{{- $v -}}{{- $_ := set $local "first" false -}}{{- end -}}
+{{- end -}}
+{{- define "helm-toolkit.utils.joinListWithComma.quote" -}}
+{{- $local := dict "first" true -}}
+{{- range $k, $v := . -}}{{- if not $local.first -}},{{- end -}}{{- $v | quote -}}{{- $_ := set $local "first" false -}}{{- end -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-glauth-cfg
+data:
+  glauth.cfg: |
+    debug = {{ .Values.config.debug }}
+    
+    [api]
+    enabled = {{ .Values.config.api.enabled }}
+    
+    [ldap]
+    enabled = {{ .Values.config.ldap.enabled }}
+    listen = "0.0.0.0:389"
+    
+    [backend]
+    datastore = {{ .Values.config.backend.datastore | quote }}
+    baseDN = {{ .Values.config.backend.baseDN | quote }}
+    
+    [ldaps]
+    enabled = {{ .Values.config.ldaps.enabled }}
+    listen = "0.0.0.0:636"
+    cert = {{ .Values.config.ldaps.cert | quote }}
+    key = {{ .Values.config.ldaps.key | quote }}
+    
+    {{ range $group := .Values.config.groups -}}
+    [[groups]]
+    unixid = {{ $group.unixid }}
+    name = {{ $group.name | quote }}
+    includegroups = [{{ include "helm-toolkit.utils.joinListWithComma" $group.includegroups }}]
+    
+    {{ end -}}
+    
+    {{ range $user := .Values.config.users -}}
+    [[groups]]
+    unixid = {{ $user.unixid }}
+    name = {{ $user.name | quote }}
+    
+    [[users]]
+    unixid = {{ $user.unixid }}
+    primarygroup = {{ $user.primarygroup }}
+    name = {{ $user.name | quote }}
+    givenname = {{ $user.givenname | quote }}
+    sn = {{ $user.sn | quote }}
+    mail = {{ $user.mail | quote }}
+    homeDir = {{ $user.homeDir | quote }}
+    loginShell = {{ $user.loginShell | quote }}
+    {{- if $user.passsha256 }}
+    passsha256 = {{ $user.passsha256 | quote }}
+    {{ else }}
+    passsha256 = {{ $user.password | sha256sum | quote }}
+    {{- end }}
+    {{ if $user.otherGroups }}otherGroups = [{{ include "helm-toolkit.utils.joinListWithComma" $user.otherGroups }}]{{ end }}
+    {{ if $user.otpsecret }}otpsecret = {{ $user.otpsecret | quote }}{{ end }}
+    {{ if $user.sshPublicKey }}sshPublicKey = [{{ include "helm-toolkit.utils.joinListWithComma.quote" $user.sshPublicKey }}]{{ end }}
+    
+    {{ end }}

@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    version: {{ .Chart.Version }}
+  name: {{ .Release.Name }}-headless
+spec:
+  clusterIP: None
+  ports:
+  - name: ldap
+    port: 389
+    protocol: TCP
+    targetPort: 389
+{{ if .Values.config.ldaps.enabled }}
+  - name: ldaps
+    port: 636
+    protocol: TCP
+    targetPort: 636
+{{ end }}
+  selector:
+    app: {{ .Release.Name }}
+    chart: {{ .Chart.Name }}
+    version: {{ .Chart.Version }}
+  sessionAffinity: None
+  type: ClusterIP

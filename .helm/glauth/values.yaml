@@ -1,0 +1,47 @@
+replicas: 2
+
+# image: glauth/glauth:v1.1.1
+image: registry.gitlab.com/egeneralov/glauth:master-1ce6755f17ae5462f03aea9fc0c4def23275fde8
+
+config:
+  debug: false
+  
+  api:
+    enabled: false
+  
+  ldap:
+    enabled: true
+  
+  backend:
+    datastore: "config"
+    baseDN: "dc=example,dc=com"
+  
+  ldaps:
+    enabled: false
+    # path to files inside container
+    cert: ""
+    key: ""
+  
+  groups:
+    - unixid: 6001
+      name: "admins"
+      includegroups:
+        - 5001
+  
+  users:
+    - unixid: 5001
+      primarygroup: 5001
+      name: "glauth"
+      givenname: "glauth"
+      sn: "glauth"
+      mail: "glauth@glauth.glauth"
+      homeDir: "/home/glauth"
+      loginShell: "/bin/bash"
+      # plain-text password
+      password: "glauth"
+      # or `echo -n "password" | openssl dgst -sha256`
+      passsha256: ""
+      # optional values below
+      otpsecret: ""
+      otherGroups: []
+      sshPublicKey: []

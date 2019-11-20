@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+      chart: {{ .Chart.Name }}
+      version: {{ .Chart.Version }}
+  serviceName: "{{ .Chart.Name }}-{{ .Release.Name }}"
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        chart: {{ .Chart.Name }}
+        version: {{ .Chart.Version }}
+    spec:
+      terminationGracePeriodSeconds: 1
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - {{ .Release.Name }}
+              topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+      containers:
+      - name: glauth
+        image: "{{ .Values.image }}"
+        ports:
+        - containerPort: 389
+          name: ldap
+{{ if .Values.config.ldaps.enabled }}
+        - containerPort: 636
+          name: ldaps
+{{ end }}
+        volumeMounts:
+        - name: {{ .Release.Name }}-glauth-cfg
+          mountPath: /glauth.cfg
+          subPath: glauth.cfg
+        livenessProbe:
+          tcpSocket:
+            port: 389
+          initialDelaySeconds: 3
+          periodSeconds: 30
+{{- $groupName := "" -}}
+{{- $isReady := false }}
+{{- range $user := .Values.config.users -}}
+{{- if eq $isReady false }}
+{{- if $user.password }}
+{{- $isReady = true }}
+{{- range $group := $.Values.config.groups -}}
+{{- if eq $group.unixid $user.primarygroup -}}
+{{ $groupName = $group.name -}}
+{{- end -}}
+{{- end }}
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -xec
+            - "ldapsearch -LLL -H ldap://127.0.0.1:389 -D cn={{ $user.name }},ou={{ $groupName }},{{ $.Values.config.backend.baseDN }} -w {{ $user.password }} -x -b{{ $.Values.config.backend.baseDN }} cn={{ $groupName }}"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+{{- end }}
+{{- end }}
+{{- end }}
+      volumes:
+        - name: {{ .Release.Name }}-glauth-cfg
+          configMap:
+            name: {{ .Release.Name }}-glauth-cfg
+            items:
+            - key: glauth.cfg
+              path: glauth.cfg
