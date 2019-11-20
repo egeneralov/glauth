@@ -24,7 +24,6 @@ FROM alpine:3.10
 
 RUN apk add --no-cache openldap-clients ca-certificates
 COPY --from=0 /go/bin /go/bin
-USER nobody
 EXPOSE 389 636 5555
 ADD glauth.cfg .
 CMD /go/bin/glauth -c /glauth.cfg
