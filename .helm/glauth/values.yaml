@@ -4,13 +4,13 @@ image:
   repository: registry.gitlab.com/egeneralov/glauth
   tag: master-1ce6755f17ae5462f03aea9fc0c4def23275fde8
 
-resources: {}
-#   requests:
-#     memory: "24Mi"
-#     cpu: "10m"
-#   limits:
-#     memory: "24Mi"
-#     cpu: "10m"
+resources:
+  requests:
+    memory: "24Mi"
+    cpu: "10m"
+  limits:
+    memory: "24Mi"
+    cpu: "10m"
 
 config:
   debug: false
