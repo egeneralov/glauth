@@ -50,13 +50,6 @@ spec:
         - name: {{ .Release.Name }}-glauth-cfg
           mountPath: /glauth.cfg
           subPath: glauth.cfg
-          resources:
-{{ .Values.resources | toYaml | indent 12 -}}
-        livenessProbe:
-          tcpSocket:
-            port: 389
-          initialDelaySeconds: 3
-          periodSeconds: 30
 {{- $groupName := "" -}}
 {{- $isReady := false }}
 {{- range $user := .Values.config.users -}}
